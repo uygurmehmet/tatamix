@@ -3,24 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TATAMIX - Yönetim Paneli</title>
+  <title>TATAMIX - Yönetim & Yetkilendirme Paneli</title>
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-    h2 { margin-top: 0; color: #1a1a1a; }
-    .card { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    h2, h3 { margin-top: 0; color: #1a1a1a; }
+    .card { background: #fff; border-radius: 8px; padding: 18px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    
+    /* Login Ekranı Stilleri */
+    .login-container { max-width: 400px; margin: 80px auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 4px; font-size: 0.85rem; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    
+    /* Form Grid */
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 10px; }
+
+    /* Panel Stilleri */
     .tatami-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
     .tab-btn { background: #e4e6eb; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     .tab-btn.active { background: #007bff; color: white; }
     .controls { display: flex; gap: 10px; margin-bottom: 15px; background: #e9ecef; padding: 12px; border-radius: 6px; align-items: center; }
-    .btn { padding: 8px 14px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+    
+    .btn { padding: 9px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+    .btn-primary { background: #007bff; color: white; }
     .btn-next { background: #28a745; color: white; font-size: 1rem; }
     .btn-danger { background: #dc3545; color: white; }
     .btn-secondary { background: #6c757d; color: white; }
+    
     .match-list { display: flex; flex-direction: column; gap: 8px; }
     .match-item { background: #fff; border: 1px solid #ddd; border-left: 6px solid #6c757d; border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
     .match-item.status-active { border-left-color: #28a745; background: #e8f5e9; }
     .match-item.status-completed { border-left-color: #dc3545; opacity: 0.6; }
     .match-item.status-waiting { border-left-color: #ffc107; }
+    
     .badge { font-weight: bold; padding: 3px 8px; border-radius: 4px; font-size: 0.85rem; }
     .badge-code { background: #343a40; color: #fff; }
     .badge-status { text-transform: uppercase; font-size: 0.75rem; margin-left: 5px; }
@@ -28,29 +43,96 @@
     .status-completed .badge-status { background: #dc3545; color: #fff; }
     .status-waiting .badge-status { background: #ffc107; color: #000; }
     .order-btns button { border: 1px solid #ccc; background: #fff; padding: 3px 8px; border-radius: 3px; cursor: pointer; }
+
+    .user-info { display: flex; justify-content: space-between; align-items: center; background: #343a40; color: #fff; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; }
+    
+    .credentials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+    .cred-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 5px; padding: 10px; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 </head>
 <body>
 
-  <h2>🥋 TATAMIX Yönetim Paneli</h2>
-
-  <div class="card">
-    <h3>📄 Kura PDF Yükle</h3>
-    <input type="file" id="pdfInput" accept="application/pdf">
-    <button class="btn btn-secondary" onclick="loadSampleData()">Örnek Eleme Kurası Yükle</button>
+  <!-- 1. GİRİŞ EKRANI -->
+  <div id="loginScreen" class="login-container">
+    <h2 style="text-align: center;">🥋 TATAMIX Giriş</h2>
+    <div class="form-group">
+      <label>Kullanıcı Adı</label>
+      <input type="text" id="loginUsername" placeholder="Kullanıcı adınız">
+    </div>
+    <div class="form-group">
+      <label>Şifre</label>
+      <input type="password" id="loginPassword" placeholder="Şifreniz">
+    </div>
+    <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="handleLogin()">Giriş Yap</button>
+    <p id="loginError" style="color: red; display: none; margin-top: 10px; text-align: center; font-size: 0.9rem;">Hatalı kullanıcı adı veya şifre!</p>
   </div>
 
-  <div class="card">
-    <div class="tatami-tabs" id="tatamiTabs"></div>
-    <div class="controls">
-      <button class="btn btn-next" onclick="nextMatch()">▶️ Sıradaki Maça Geç</button>
-      <button class="btn btn-danger" onclick="finishCurrentMatch()">⏹️ Canlı Maçı Bitir</button>
-      <span id="currentStatusText" style="margin-left:auto; font-weight:bold;"></span>
+  <!-- 2. YÖNETİM PANELİ EKRANI -->
+  <div id="mainPanel" style="display: none;">
+    
+    <div class="user-info">
+      <div>
+        <span id="userBadge" class="badge" style="background:#007bff; font-size:0.9rem;"></span>
+        <span id="welcomeText" style="margin-left: 10px; font-weight: bold;"></span>
+      </div>
+      <button class="btn btn-danger" onclick="handleLogout()">Çıkış Yap</button>
     </div>
-    <div id="matchList" class="match-list">Yükleniyor...</div>
+
+    <!-- SADECE ORGANİZASYON SORUMLUSU GÖREBİLİR -->
+    <div id="orgSection" class="card" style="display: none;">
+      <h3>🔑 Tatami Şefleri Giriş Bilgileri Yönetimi</h3>
+      <div class="credentials-grid" id="credentialsContainer"></div>
+      <button class="btn btn-primary" style="margin-top: 15px;" onclick="saveCredentials()">Giriş Bilgilerini Kaydet</button>
+      
+      <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+      <h3>📄 Örnek Kura Yükleme</h3>
+      <button class="btn btn-secondary" onclick="loadSampleData()">Örnek Eleme Kurası Yükle</button>
+    </div>
+
+    <!-- MAÇ EKLEME ALANI (TATAMİ ŞEFİ & ADMİN KULLANABİLİR) -->
+    <div class="card">
+      <h3>➕ Tatami <span id="addMatchTatamiNum">1</span> İçin Yeni Maç Ekle (Elle Kura Girişi)</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Kategori</label>
+          <input type="text" id="newCategory" placeholder="Örn: 60 KG ERKEK ELEME">
+        </div>
+        <div class="form-group">
+          <label>🔴 AKA Sporcu</label>
+          <input type="text" id="newAka" placeholder="Sporcu Ad Soyad">
+        </div>
+        <div class="form-group">
+          <label>🔴 AKA Kulüp</label>
+          <input type="text" id="newAkaClub" placeholder="Kulüp Adı">
+        </div>
+        <div class="form-group">
+          <label>🔵 AO Sporcu</label>
+          <input type="text" id="newAo" placeholder="Sporcu Ad Soyad">
+        </div>
+        <div class="form-group">
+          <label>🔵 AO Kulüp</label>
+          <input type="text" id="newAoClub" placeholder="Kulüp Adı">
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addSingleMatch()">Maçı Sıraya Ekle</button>
+    </div>
+
+    <!-- MAÇ YÖNETİM ALANI -->
+    <div class="card">
+      <div class="tatami-tabs" id="tatamiTabs"></div>
+      
+      <div class="controls">
+        <button class="btn btn-next" onclick="nextMatch()">▶️ Sıradaki Maça Geç</button>
+        <button class="btn btn-danger" onclick="finishCurrentMatch()">⏹️ Canlı Maçı Bitir</button>
+        <span id="currentStatusText" style="margin-left:auto; font-weight:bold;"></span>
+      </div>
+
+      <div id="matchList" class="match-list">Yükleniyor...</div>
+    </div>
+
   </div>
 
   <script>
@@ -66,29 +148,189 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    let currentUser = null;
     let allMatches = [];
+    let systemAuth = {};
     let selectedTatami = 1;
 
-    // Tatami Sekmelerini Oluştur (1..9)
+    function initDefaultAuth(snapshotVal) {
+      if (!snapshotVal) {
+        const defaultAuth = { org: { user: "admin", pass: "12345" } };
+        for (let i = 1; i <= 9; i++) {
+          defaultAuth[`tatami_${i}`] = { user: `tatami${i}`, pass: `12345` };
+        }
+        db.ref('auth').set(defaultAuth);
+        return defaultAuth;
+      }
+      return snapshotVal;
+    }
+
+    db.ref('auth').on('value', (snapshot) => {
+      systemAuth = initDefaultAuth(snapshot.val());
+      if (currentUser && currentUser.role === 'org') {
+        renderCredentialsForm();
+      }
+    });
+
+    db.ref('matches').on('value', (snapshot) => {
+      allMatches = snapshot.val() || [];
+      if (currentUser) renderMatchList();
+    });
+
+    function handleLogin() {
+      const u = document.getElementById('loginUsername').value.trim();
+      const p = document.getElementById('loginPassword').value.trim();
+      const errorEl = document.getElementById('loginError');
+
+      if (systemAuth.org && u === systemAuth.org.user && p === systemAuth.org.pass) {
+        currentUser = { role: 'org', name: 'Organizasyon Sorumlusu' };
+        setupPanel();
+        return;
+      }
+
+      for (let i = 1; i <= 9; i++) {
+        const tAuth = systemAuth[`tatami_${i}`];
+        if (tAuth && u === tAuth.user && p === tAuth.pass) {
+          currentUser = { role: 'tatami', tatamiNum: i, name: `Tatami ${i} Şefi` };
+          selectedTatami = i;
+          setupPanel();
+          return;
+        }
+      }
+
+      errorEl.style.display = 'block';
+    }
+
+    function setupPanel() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainPanel').style.display = 'block';
+
+      document.getElementById('welcomeText').innerText = currentUser.name;
+      document.getElementById('userBadge').innerText = currentUser.role === 'org' ? 'SÜPER ADMİN' : 'TATAMİ ŞEFİ';
+      document.getElementById('addMatchTatamiNum').innerText = selectedTatami;
+
+      if (currentUser.role === 'org') {
+        document.getElementById('orgSection').style.display = 'block';
+        renderCredentialsForm();
+      } else {
+        document.getElementById('orgSection').style.display = 'none';
+      }
+
+      renderTabs();
+      renderMatchList();
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      document.getElementById('loginScreen').style.display = 'block';
+      document.getElementById('mainPanel').style.display = 'none';
+      document.getElementById('loginUsername').value = '';
+      document.getElementById('loginPassword').value = '';
+    }
+
+    function renderCredentialsForm() {
+      const container = document.getElementById('credentialsContainer');
+      container.innerHTML = '';
+
+      let html = `
+        <div class="cred-box" style="border-left: 4px solid #007bff;">
+          <strong>Organizasyon Sorumlusu</strong><br>
+          <small>Kull. Adı:</small> <input type="text" id="auth_org_user" value="${systemAuth.org?.user || 'admin'}" style="width:100%; margin-bottom:5px;">
+          <small>Şifre:</small> <input type="text" id="auth_org_pass" value="${systemAuth.org?.pass || '12345'}" style="width:100%;">
+        </div>
+      `;
+
+      for (let i = 1; i <= 9; i++) {
+        const t = systemAuth[`tatami_${i}`] || { user: `tatami${i}`, pass: '12345' };
+        html += `
+          <div class="cred-box">
+            <strong>Tatami ${i} Şefi</strong><br>
+            <small>Kull. Adı:</small> <input type="text" id="auth_t${i}_user" value="${t.user}" style="width:100%; margin-bottom:5px;">
+            <small>Şifre:</small> <input type="text" id="auth_t${i}_pass" value="${t.pass}" style="width:100%;">
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function saveCredentials() {
+      const updatedAuth = {
+        org: {
+          user: document.getElementById('auth_org_user').value.trim(),
+          pass: document.getElementById('auth_org_pass').value.trim()
+        }
+      };
+
+      for (let i = 1; i <= 9; i++) {
+        updatedAuth[`tatami_${i}`] = {
+          user: document.getElementById(`auth_t${i}_user`).value.trim(),
+          pass: document.getElementById(`auth_t${i}_pass`).value.trim()
+        };
+      }
+
+      db.ref('auth').set(updatedAuth).then(() => {
+        alert("Giriş bilgileri başarıyla güncellendi!");
+      });
+    }
+
     function renderTabs() {
       const tabs = document.getElementById('tatamiTabs');
       tabs.innerHTML = '';
-      for (let i = 1; i <= 9; i++) {
+
+      if (currentUser.role === 'org') {
+        for (let i = 1; i <= 9; i++) {
+          const btn = document.createElement('button');
+          btn.className = `tab-btn ${selectedTatami === i ? 'active' : ''}`;
+          btn.innerText = `Tatami ${i}`;
+          btn.onclick = () => { 
+            selectedTatami = i; 
+            document.getElementById('addMatchTatamiNum').innerText = i;
+            renderTabs(); 
+            renderMatchList(); 
+          };
+          tabs.appendChild(btn);
+        }
+      } else {
         const btn = document.createElement('button');
-        btn.className = `tab-btn ${selectedTatami === i ? 'active' : ''}`;
-        btn.innerText = `Tatami ${i}`;
-        btn.onclick = () => { selectedTatami = i; renderTabs(); renderMatchList(); };
+        btn.className = 'tab-btn active';
+        btn.innerText = `Tatami ${currentUser.tatamiNum}`;
         tabs.appendChild(btn);
       }
     }
 
-    // Veritabanı Dinleyici
-    db.ref('matches').on('value', (snapshot) => {
-      allMatches = snapshot.val() || [];
-      renderMatchList();
-    });
+    // ELLE MAÇ/KURA EKLEME FONKSİYONU
+    function addSingleMatch() {
+      const cat = document.getElementById('newCategory').value.trim() || 'ELEME MAÇI';
+      const aka = document.getElementById('newAka').value.trim();
+      const akaClub = document.getElementById('newAkaClub').value.trim();
+      const ao = document.getElementById('newAo').value.trim();
+      const aoClub = document.getElementById('newAoClub').value.trim();
 
-    // Filtrelenmiş Liste Render
+      if (!aka || !ao) {
+        alert("Lütfen hem AKA hem de AO sporcu isimlerini giriniz.");
+        return;
+      }
+
+      const newMatch = {
+        tatami: selectedTatami,
+        category: cat,
+        aka: aka,
+        akaClub: akaClub,
+        ao: ao,
+        aoClub: aoClub,
+        status: 'waiting'
+      };
+
+      allMatches.push(newMatch);
+      db.ref('matches').set(allMatches).then(() => {
+        // Form alanlarını temizle
+        document.getElementById('newAka').value = '';
+        document.getElementById('newAkaClub').value = '';
+        document.getElementById('newAo').value = '';
+        document.getElementById('newAoClub').value = '';
+      });
+    }
+
     function renderMatchList() {
       const listContainer = document.getElementById('matchList');
       listContainer.innerHTML = '';
@@ -96,7 +338,7 @@
       const filtered = allMatches.filter(m => parseInt(m.tatami) === selectedTatami);
 
       if (filtered.length === 0) {
-        listContainer.innerHTML = `<p>Tatami ${selectedTatami} için kayıtlı maç bulunamadı.</p>`;
+        listContainer.innerHTML = `<p>Tatami ${selectedTatami} için henüz kayıtlı maç bulunamadı. Yukarıdaki formdan ekleyebilirsiniz.</p>`;
         return;
       }
 
@@ -125,6 +367,7 @@
             </div>
             <button class="btn btn-secondary" onclick="setIndividualStatus(${globalIndex}, 'active')">Canlı Yap</button>
             <button class="btn btn-danger" onclick="setIndividualStatus(${globalIndex}, 'completed')">Bitir</button>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="deleteMatch(${globalIndex})">🗑️</button>
           </div>
         `;
         listContainer.appendChild(div);
@@ -134,21 +377,13 @@
         `Tatami ${selectedTatami} Durumu: ${activeCount > 0 ? '🔴 CANLI MAÇ VAR' : '⚪ BEKLEMEDE'}`;
     }
 
-    // Sıradaki Maça Geç (Mevcut Canlıyı Bitir, Bir Sonraki Bekleyeni Canlı Yap)
     function nextMatch() {
       const tatamiMatches = allMatches.filter(m => parseInt(m.tatami) === selectedTatami);
       const activeMatch = tatamiMatches.find(m => m.status === 'active');
       const nextWaitingMatch = tatamiMatches.find(m => m.status === 'waiting');
 
-      if (activeMatch) {
-        activeMatch.status = 'completed';
-      }
-
-      if (nextWaitingMatch) {
-        nextWaitingMatch.status = 'active';
-      } else {
-        alert(`Tatami ${selectedTatami} üzerinde bekleyen maç kalmadı!`);
-      }
+      if (activeMatch) activeMatch.status = 'completed';
+      if (nextWaitingMatch) nextWaitingMatch.status = 'active';
 
       db.ref('matches').set(allMatches);
     }
@@ -164,7 +399,6 @@
 
     function setIndividualStatus(index, status) {
       if (status === 'active') {
-        // Bir tatamide aynı anda yalnızca 1 maç canlı olabilir
         const targetTatami = parseInt(allMatches[index].tatami);
         allMatches.forEach(m => {
           if (parseInt(m.tatami) === targetTatami && m.status === 'active') {
@@ -176,7 +410,6 @@
       db.ref('matches').set(allMatches);
     }
 
-    // Sıralamayı Değiştirme (Yukarı / Aşağı)
     function moveMatch(index, direction) {
       const targetIndex = index + direction;
       if (targetIndex < 0 || targetIndex >= allMatches.length) return;
@@ -189,18 +422,20 @@
       db.ref('matches').set(allMatches);
     }
 
+    function deleteMatch(index) {
+      if (confirm("Bu maçı silmek istediğinize emin misiniz?")) {
+        allMatches.splice(index, 1);
+        db.ref('matches').set(allMatches);
+      }
+    }
+
     function loadSampleData() {
       const samples = [
         {tatami: 1, category: "60 KG ERKEK ELEME", aka: "ALTINTAŞ YAHYA", akaClub: "SAMSUN", ao: "DEMİREL DOĞUKAN", aoClub: "AY YILDIZ", status: "active"},
-        {tatami: 1, category: "60 KG ERKEK ELEME", aka: "UYSAL ALP EMİR", akaClub: "KATANA", ao: "ALTINTAŞ MEHMET", aoClub: "NAZİLLİ", status: "waiting"},
-        {tatami: 1, category: "60 KG ERKEK ÇEYREK FİNAL", aka: "KAZANAN MAÇ 101", akaClub: "", ao: "KAZANAN MAÇ 102", aoClub: "", status: "waiting"},
-        {tatami: 2, category: "67 KG ERKEK ELEME", aka: "ZALAT USAME", akaClub: "İSTANBUL", ao: "KARATÖZ RAMAZAN", aoClub: "ANTAKYA", status: "active"},
-        {tatami: 2, category: "67 KG ERKEK ELEME", aka: "ÇİLLO NİZAR", akaClub: "ARAS", ao: "ÇOBAN OGÜN", aoClub: "UŞAK", status: "waiting"}
+        {tatami: 1, category: "60 KG ERKEK ELEME", aka: "UYSAL ALP EMİR", akaClub: "KATANA", ao: "ALTINTAŞ MEHMET", aoClub: "NAZİLLİ", status: "waiting"}
       ];
       db.ref('matches').set(samples);
     }
-
-    renderTabs();
   </script>
 </body>
 </html>
