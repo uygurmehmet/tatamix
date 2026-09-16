@@ -1,20 +1,22 @@
-HTML
 <!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TATAMIX - Canlı Turnuva</title>
+  <title>TATAMIX - Canlı Turnuva Takibi</title>
   <style>
-    body { font-family: sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
-    h1 { text-align: center; color: #2ec4b6; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; max-width: 1000px; margin: 20px auto; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
+    h1 { text-align: center; color: #2ec4b6; margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }
     .match-card { background: #1e1e1e; border: 1px solid #333; border-radius: 8px; padding: 15px; position: relative; }
-    .match-card.active { border: 2px solid #2ec4b6; background: #162826; }
-    .badge { position: absolute; top: 10px; right: 10px; font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; background: #444; }
+    .match-card.active { border: 2px solid #2ec4b6; background: #162826; box-shadow: 0 0 12px rgba(46,196,182,0.3); }
+    .match-no { font-size: 1.4rem; font-weight: 800; color: #ff9f1c; margin-bottom: 5px; }
+    .badge { position: absolute; top: 12px; right: 12px; font-size: 0.75rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: #444; }
     .active .badge { background: #e71d36; }
-    .aka { color: #ff5252; font-weight: bold; }
+    .category { font-size: 0.85rem; color: #aaa; margin-bottom: 12px; font-weight: 600; }
+    .aka { color: #ff5252; font-weight: bold; margin-bottom: 4px; }
     .ao { color: #448aff; font-weight: bold; }
+    .club { font-size: 0.8rem; color: #888; font-weight: normal; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -25,14 +27,13 @@ HTML
 
   <script>
     const firebaseConfig = {
-  apiKey: "AIzaSyCShvh2TAb21zNeGgFLglcl9DbnAXMyaW8",
-  authDomain: "tatamix-live.firebaseapp.com",
-  databaseURL: "https://tatamix-live-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "tatamix-live",
-  storageBucket: "tatamix-live.firebasestorage.app",
-  messagingSenderId: "23979840281",
-  appId: "1:23979840281:web:2bbd869910fa4573326b88"
-
+      apiKey: "AIzaSyCShvh2TAb21zNeGgFLglcl9DbnAXMyaW8",
+      authDomain: "tatamix-live.firebaseapp.com",
+      databaseURL: "https://tatamix-live-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "tatamix-live",
+      storageBucket: "tatamix-live.firebasestorage.app",
+      messagingSenderId: "23979840281",
+      appId: "1:23979840281:web:2bbd869910fa4573326b88"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -41,17 +42,26 @@ HTML
       const data = snapshot.val();
       const container = document.getElementById('matches');
       container.innerHTML = '';
-      if (!data) { container.innerHTML = 'Henüz veri yüklenmedi.'; return; }
+      if (!data) { container.innerHTML = 'Henüz maç verisi yüklenmedi.'; return; }
+
+      const tatamiCounters = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0};
 
       data.forEach(match => {
+        const tNum = parseInt(match.tatami) || 1;
+        tatamiCounters[tNum] = (tatamiCounters[tNum] || 0) + 1;
+        
+        const matchSequence = tatamiCounters[tNum].toString().padStart(2, '0');
+        const matchCode = `${tNum}${matchSequence}`;
+
         const card = document.createElement('div');
         const isActive = match.status === 'active';
         card.className = `match-card ${isActive ? 'active' : ''}`;
         card.innerHTML = `
           <div class="badge">${isActive ? '🔴 CANLI' : (match.status === 'completed' ? 'BİTTİ' : 'BEKLİYOR')}</div>
-          <small>Tatami ${match.tatami} | ${match.category}</small><br><br>
-          <div class="aka">🔴 ${match.aka}</div>
-          <div class="ao">🔵 ${match.ao}</div>
+          <div class="match-no">📌 MAÇ NO: ${matchCode} <small style="font-size:0.8rem; color:#888;">(Tatami ${tNum})</small></div>
+          <div class="category">${match.category}</div>
+          <div class="aka">🔴 AKA: ${match.aka} <span class="club">(${match.akaClub || ''})</span></div>
+          <div class="ao">🔵 AO: ${match.ao} <span class="club">(${match.aoClub || ''})</span></div>
         `;
         container.appendChild(card);
       });
