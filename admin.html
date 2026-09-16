@@ -22,13 +22,14 @@
     .tatami-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
     .tab-btn { background: #e4e6eb; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     .tab-btn.active { background: #007bff; color: white; }
-    .controls { display: flex; gap: 10px; margin-bottom: 15px; background: #e9ecef; padding: 12px; border-radius: 6px; align-items: center; }
+    .controls { display: flex; gap: 10px; margin-bottom: 15px; background: #e9ecef; padding: 12px; border-radius: 6px; align-items: center; flex-wrap: wrap; }
     
-    .btn { padding: 9px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+    .btn { padding: 9px 15px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; }
     .btn-primary { background: #007bff; color: white; }
     .btn-next { background: #28a745; color: white; font-size: 1rem; }
     .btn-danger { background: #dc3545; color: white; }
     .btn-secondary { background: #6c757d; color: white; }
+    .btn-dark { background: #343a40; color: white; }
     
     .match-list { display: flex; flex-direction: column; gap: 8px; }
     .match-item { background: #fff; border: 1px solid #ddd; border-left: 6px solid #6c757d; border-radius: 6px; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
@@ -48,13 +49,32 @@
     
     .credentials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
     .cred-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 5px; padding: 10px; }
+    .pdf-box { background: #eef5ff; border: 1px solid #b6d4fe; border-radius: 6px; padding: 15px; margin-top: 15px; }
+
+    /* Modal / Pencere İçinde Pencere Stilleri */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-content { background: #fff; width: 90%; max-width: 900px; max-height: 85vh; border-radius: 8px; padding: 20px; overflow-y: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+    .modal-close { background: #dc3545; color: white; border: none; padding: 5px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 1.1rem; }
+    
+    .full-list-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .full-list-table th, .full-list-table td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 0.9rem; }
+    .full-list-table th { background: #f4f6f9; font-weight: bold; }
+    .full-list-table tr.active-row { background: #e8f5e9; font-weight: bold; }
+    .full-list-table tr.completed-row { opacity: 0.6; background: #f8f9fa; }
   </style>
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <!-- PDF.js Kütüphanesi -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  </script>
 </head>
 <body>
 
-  <!-- 1. GİRİŞ EKRANI -->
+  <!-- GİRİŞ EKRANI -->
   <div id="loginScreen" class="login-container">
     <h2 style="text-align: center;">🥋 TATAMIX Giriş</h2>
     <div class="form-group">
@@ -69,7 +89,7 @@
     <p id="loginError" style="color: red; display: none; margin-top: 10px; text-align: center; font-size: 0.9rem;">Hatalı kullanıcı adı veya şifre!</p>
   </div>
 
-  <!-- 2. YÖNETİM PANELİ EKRANI -->
+  <!-- YÖNETİM PANELİ EKRANI -->
   <div id="mainPanel" style="display: none;">
     
     <div class="user-info">
@@ -77,10 +97,13 @@
         <span id="userBadge" class="badge" style="background:#007bff; font-size:0.9rem;"></span>
         <span id="welcomeText" style="margin-left: 10px; font-weight: bold;"></span>
       </div>
-      <button class="btn btn-danger" onclick="handleLogout()">Çıkış Yap</button>
+      <div>
+        <button class="btn btn-dark" onclick="openFullListModal()">📜 Tüm Maç Listesini Gör</button>
+        <button class="btn btn-danger" onclick="handleLogout()">Çıkış Yap</button>
+      </div>
     </div>
 
-    <!-- SADECE ORGANİZASYON SORUMLUSU GÖREBİLİR -->
+    <!-- ORGANİZASYON SORUMLUSU ALANI -->
     <div id="orgSection" class="card" style="display: none;">
       <h3>🔑 Tatami Şefleri Giriş Bilgileri Yönetimi</h3>
       <div class="credentials-grid" id="credentialsContainer"></div>
@@ -88,11 +111,17 @@
       
       <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
 
-      <h3>📄 Örnek Kura Yükleme</h3>
-      <button class="btn btn-secondary" onclick="loadSampleData()">Örnek Eleme Kurası Yükle</button>
+      <h3>📄 PDF / Kura Verisi Yükle</h3>
+      <div class="pdf-box">
+        <label style="font-weight: bold; display: block; margin-bottom: 8px;">Karate Kura Dosyası (PDF) Seçin:</label>
+        <input type="file" id="pdfInput" accept="application/pdf" style="margin-bottom: 10px;">
+        <br>
+        <button class="btn btn-primary" onclick="parsePDF()">📥 PDF'i Oku ve Veritabanına Yükle</button>
+        <button class="btn btn-secondary" onclick="loadSampleData()">Örnek Eleme Kurası Yükle</button>
+      </div>
     </div>
 
-    <!-- MAÇ EKLEME ALANI (TATAMİ ŞEFİ & ADMİN KULLANABİLİR) -->
+    <!-- MAÇ EKLEME ALANI -->
     <div class="card">
       <h3>➕ Tatami <span id="addMatchTatamiNum">1</span> İçin Yeni Maç Ekle (Elle Kura Girişi)</h3>
       <div class="form-grid">
@@ -127,12 +156,39 @@
       <div class="controls">
         <button class="btn btn-next" onclick="nextMatch()">▶️ Sıradaki Maça Geç</button>
         <button class="btn btn-danger" onclick="finishCurrentMatch()">⏹️ Canlı Maçı Bitir</button>
+        <button class="btn btn-dark" onclick="openFullListModal()">📜 Tüm Maçları Listele</button>
         <span id="currentStatusText" style="margin-left:auto; font-weight:bold;"></span>
       </div>
 
       <div id="matchList" class="match-list">Yükleniyor...</div>
     </div>
 
+  </div>
+
+  <!-- MODAL / AÇILIR PENCERE (TÜM MAÇLARIN SIRALI LİSTESİ) -->
+  <div id="fullListModal" class="modal-overlay" onclick="closeModalOnOutside(event)">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="margin: 0;">📜 Tüm Tatamilerin Maç Sıralama Listesi</h3>
+        <button class="modal-close" onclick="closeFullListModal()">✕</button>
+      </div>
+      <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+        <label style="font-weight: bold;">Tatami Filtrele:</label>
+        <select id="modalTatamiFilter" style="width: auto; padding: 6px 12px; border-radius: 4px;" onchange="renderModalMatchList()">
+          <option value="all">Tüm Tatamiler</option>
+          <option value="1">Tatami 1</option>
+          <option value="2">Tatami 2</option>
+          <option value="3">Tatami 3</option>
+          <option value="4">Tatami 4</option>
+          <option value="5">Tatami 5</option>
+          <option value="6">Tatami 6</option>
+          <option value="7">Tatami 7</option>
+          <option value="8">Tatami 8</option>
+          <option value="9">Tatami 9</option>
+        </select>
+      </div>
+      <div id="modalTableContainer">Yükleniyor...</div>
+    </div>
   </div>
 
   <script>
@@ -175,6 +231,9 @@
     db.ref('matches').on('value', (snapshot) => {
       allMatches = snapshot.val() || [];
       if (currentUser) renderMatchList();
+      if (document.getElementById('fullListModal').style.display === 'flex') {
+        renderModalMatchList();
+      }
     });
 
     function handleLogin() {
@@ -273,6 +332,68 @@
       });
     }
 
+    // PDF OKUMA VE AYRIŞTIRMA MANTIĞI
+    async function parsePDF() {
+      const fileInput = document.getElementById('pdfInput');
+      if (!fileInput.files.length) {
+        alert("Lütfen bir PDF dosyası seçin!");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+      let extractedMatches = [];
+      let currentCategory = "KURA MAÇI";
+      let currentTatami = 1;
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const lines = textContent.items.map(item => item.str.trim()).filter(t => t !== "");
+
+        for (let j = 0; j < lines.length; j++) {
+          const line = lines[j];
+
+          if (line.toLowerCase().includes('tatami')) {
+            const match = line.match(/\d+/);
+            if (match) currentTatami = parseInt(match[0]);
+          }
+
+          if (line.includes('KG') || line.includes('KATA') || line.includes('KUMITE') || line.includes('BAY') || line.includes('BAYAN')) {
+            currentCategory = line;
+          }
+
+          if (line === 'VS' || line === 'vs' || line === '-') {
+            const akaName = lines[j - 2] || 'SPORCU 1';
+            const akaClub = lines[j - 1] || '';
+            const aoName = lines[j + 1] || 'SPORCU 2';
+            const aoClub = lines[j + 2] || '';
+
+            extractedMatches.push({
+              tatami: currentTatami,
+              category: currentCategory,
+              aka: akaName,
+              akaClub: akaClub,
+              ao: aoName,
+              aoClub: aoClub,
+              status: 'waiting'
+            });
+          }
+        }
+      }
+
+      if (extractedMatches.length > 0) {
+        extractedMatches[0].status = 'active';
+        db.ref('matches').set(extractedMatches).then(() => {
+          alert(`PDF Başarıyla İşlendi! Toplam ${extractedMatches.length} maç veritabanına aktarıldı.`);
+        });
+      } else {
+        alert("PDF içerisinden uygun kura yapısı okunamadı. Lütfen 'Örnek Eleme Kurası Yükle' butonunu kullanın veya elle maç ekleyin.");
+      }
+    }
+
     function renderTabs() {
       const tabs = document.getElementById('tatamiTabs');
       tabs.innerHTML = '';
@@ -298,7 +419,6 @@
       }
     }
 
-    // ELLE MAÇ/KURA EKLEME FONKSİYONU
     function addSingleMatch() {
       const cat = document.getElementById('newCategory').value.trim() || 'ELEME MAÇI';
       const aka = document.getElementById('newAka').value.trim();
@@ -323,7 +443,6 @@
 
       allMatches.push(newMatch);
       db.ref('matches').set(allMatches).then(() => {
-        // Form alanlarını temizle
         document.getElementById('newAka').value = '';
         document.getElementById('newAkaClub').value = '';
         document.getElementById('newAo').value = '';
@@ -338,7 +457,7 @@
       const filtered = allMatches.filter(m => parseInt(m.tatami) === selectedTatami);
 
       if (filtered.length === 0) {
-        listContainer.innerHTML = `<p>Tatami ${selectedTatami} için henüz kayıtlı maç bulunamadı. Yukarıdaki formdan ekleyebilirsiniz.</p>`;
+        listContainer.innerHTML = `<p>Tatami ${selectedTatami} için henüz kayıtlı maç bulunamadı.</p>`;
         return;
       }
 
@@ -432,9 +551,90 @@
     function loadSampleData() {
       const samples = [
         {tatami: 1, category: "60 KG ERKEK ELEME", aka: "ALTINTAŞ YAHYA", akaClub: "SAMSUN", ao: "DEMİREL DOĞUKAN", aoClub: "AY YILDIZ", status: "active"},
-        {tatami: 1, category: "60 KG ERKEK ELEME", aka: "UYSAL ALP EMİR", akaClub: "KATANA", ao: "ALTINTAŞ MEHMET", aoClub: "NAZİLLİ", status: "waiting"}
+        {tatami: 1, category: "60 KG ERKEK ELEME", aka: "UYSAL ALP EMİR", akaClub: "KATANA", ao: "ALTINTAŞ MEHMET", aoClub: "NAZİLLİ", status: "waiting"},
+        {tatami: 2, category: "67 KG ERKEK ELEME", aka: "ZALAT USAME", akaClub: "İSTANBUL", ao: "KARATÖZ RAMAZAN", aoClub: "ANTAKYA", status: "active"}
       ];
       db.ref('matches').set(samples);
+    }
+
+    /* MODAL PENCERE FONKSİYONLARI */
+    function openFullListModal() {
+      document.getElementById('fullListModal').style.display = 'flex';
+      renderModalMatchList();
+    }
+
+    function closeFullListModal() {
+      document.getElementById('fullListModal').style.display = 'none';
+    }
+
+    function closeModalOnOutside(e) {
+      if (e.target.id === 'fullListModal') closeFullListModal();
+    }
+
+    function renderModalMatchList() {
+      const filterValue = document.getElementById('modalTatamiFilter').value;
+      const container = document.getElementById('modalTableContainer');
+
+      let list = allMatches;
+      if (filterValue !== 'all') {
+        list = allMatches.filter(m => parseInt(m.tatami) === parseInt(filterValue));
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color:#666;">Gösterilecek maç bulunamadı.</p>`;
+        return;
+      }
+
+      let html = `
+        <table class="full-list-table">
+          <thead>
+            <tr>
+              <th>Tatami</th>
+              <th>Maç No</th>
+              <th>Kategori</th>
+              <th>🔴 AKA (Kırmızı)</th>
+              <th>🔵 AO (Mavi)</th>
+              <th>Durum</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      // Tatami bazlı sayaç tutalım ki Maç No hesaplayabilelim
+      const tatamiCounters = {};
+
+      allMatches.forEach((m) => {
+        const t = m.tatami;
+        tatamiCounters[t] = (tatamiCounters[t] || 0) + 1;
+        const code = `${t}${tatamiCounters[t].toString().padStart(2, '0')}`;
+
+        if (filterValue === 'all' || parseInt(filterValue) === parseInt(t)) {
+          let rowClass = '';
+          let statusBadge = '<span class="badge" style="background:#ffc107; color:#000;">BEKLİYOR</span>';
+          
+          if (m.status === 'active') {
+            rowClass = 'active-row';
+            statusBadge = '<span class="badge" style="background:#28a745; color:#fff;">🔴 CANLI</span>';
+          } else if (m.status === 'completed') {
+            rowClass = 'completed-row';
+            statusBadge = '<span class="badge" style="background:#dc3545; color:#fff;">BİTTİ</span>';
+          }
+
+          html += `
+            <tr class="${rowClass}">
+              <td><strong>Tatami ${m.tatami}</strong></td>
+              <td><span class="badge badge-code">${code}</span></td>
+              <td>${m.category || '-'}</td>
+              <td><strong style="color:#d9534f;">${m.aka}</strong> <br><small>${m.akaClub || ''}</small></td>
+              <td><strong style="color:#0275d8;">${m.ao}</strong> <br><small>${m.aoClub || ''}</small></td>
+              <td>${statusBadge}</td>
+            </tr>
+          `;
+        }
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
     }
   </script>
 </body>

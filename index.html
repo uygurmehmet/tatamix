@@ -3,30 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TATAMIX - Canlı Maç Takibi</title>
+  <title>TATAMIX - Canlı Yayın & Maç Sıralaması</title>
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
-    h1 { text-align: center; color: #2ec4b6; margin-bottom: 20px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; max-width: 1400px; margin: 0 auto; }
-    .tatami-card { background: #1e1e1e; border: 1px solid #333; border-radius: 8px; padding: 15px; }
-    .tatami-header { font-size: 1.2rem; font-weight: bold; color: #ff9f1c; border-bottom: 1px solid #333; padding-bottom: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; }
-    .match-box { background: #2a2a2a; border-radius: 6px; padding: 10px; margin-bottom: 8px; position: relative; border-left: 4px solid #666; }
-    .match-box.active { border-left-color: #e71d36; background: #2b1b1d; box-shadow: 0 0 10px rgba(231,29,54,0.3); }
-    .match-box.completed { opacity: 0.5; }
-    .match-no { font-weight: bold; font-size: 1.1rem; color: #2ec4b6; }
-    .badge { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; font-weight: bold; padding: 3px 6px; border-radius: 3px; background: #444; }
-    .active .badge { background: #e71d36; }
-    .category { font-size: 0.8rem; color: #aaa; margin: 4px 0 8px 0; }
-    .aka { color: #ff5252; font-weight: bold; }
-    .ao { color: #448aff; font-weight: bold; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+    h1 { margin: 0; color: #007bff; }
+    
+    .btn { padding: 10px 18px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+    .btn-dark { background: #333; color: white; border: 1px solid #555; }
+    .btn-dark:hover { background: #444; }
+
+    .tatami-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    .tatami-card { background: #1e1e1e; border-radius: 10px; border: 1px solid #333; padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .tatami-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+    .tatami-title { font-size: 1.2rem; font-weight: bold; color: #ffc107; }
+    
+    .match-box { background: #2a2a2a; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 5px solid #555; }
+    .match-box.active { border-left-color: #28a745; background: #1b3820; }
+    .match-box.next { border-left-color: #ffc107; }
+    
+    .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+    .badge-active { background: #28a745; color: white; }
+    .badge-next { background: #ffc107; color: black; }
+    
+    .fighter-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; margin-top: 5px; }
+    .aka-text { color: #ff4d4d; }
+    .ao-text { color: #4da6ff; }
+
+    /* Modal / Pop-Up Stilleri */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-content { background: #1e1e1e; width: 92%; max-width: 950px; max-height: 85vh; border-radius: 10px; padding: 22px; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.8); color: #fff; border: 1px solid #444; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 12px; margin-bottom: 15px; }
+    .modal-close { background: #dc3545; color: white; border: none; padding: 6px 14px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 1.1rem; }
+
+    .full-list-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .full-list-table th, .full-list-table td { border: 1px solid #444; padding: 10px; text-align: left; font-size: 0.9rem; }
+    .full-list-table th { background: #2a2a2a; color: #ffc107; font-weight: bold; }
+    .full-list-table tr.active-row { background: #1b3820; font-weight: bold; }
+    .full-list-table tr.completed-row { opacity: 0.5; background: #181818; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
-  <h1>🥋 TATAMIX Canlı Maç Akışı</h1>
-  <div id="tatamiGrid" class="grid">Yükleniyor...</div>
+  <div class="header">
+    <h1>🥋 TATAMIX Canlı Yayın Ekranı</h1>
+    <button class="btn btn-dark" onclick="openFullListModal()">📜 Tüm Maç Sıralamasını Gör</button>
+  </div>
+
+  <div class="tatami-grid" id="tatamiGrid">Yükleniyor...</div>
+
+  <!-- AÇILIR PENCERE (MODAL) -->
+  <div id="fullListModal" class="modal-overlay" onclick="closeModalOnOutside(event)">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="margin: 0; color: #007bff;">📜 Tüm Tatamilerin Kura ve Maç Sıralaması</h3>
+        <button class="modal-close" onclick="closeFullListModal()">✕</button>
+      </div>
+      <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+        <label style="font-weight: bold;">Tatami Filtrele:</label>
+        <select id="modalTatamiFilter" style="background:#2a2a2a; color:#fff; padding: 8px 12px; border: 1px solid #555; border-radius: 4px;" onchange="renderModalMatchList()">
+          <option value="all">Tüm Tatamiler</option>
+          <option value="1">Tatami 1</option>
+          <option value="2">Tatami 2</option>
+          <option value="3">Tatami 3</option>
+          <option value="4">Tatami 4</option>
+          <option value="5">Tatami 5</option>
+          <option value="6">Tatami 6</option>
+          <option value="7">Tatami 7</option>
+          <option value="8">Tatami 8</option>
+          <option value="9">Tatami 9</option>
+        </select>
+      </div>
+      <div id="modalTableContainer">Yükleniyor...</div>
+    </div>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -41,40 +93,149 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    let allMatches = [];
+
     db.ref('matches').on('value', (snapshot) => {
-      const data = snapshot.val() || [];
+      allMatches = snapshot.val() || [];
+      renderViewerPanel();
+      if (document.getElementById('fullListModal').style.display === 'flex') {
+        renderModalMatchList();
+      }
+    });
+
+    function renderViewerPanel() {
       const grid = document.getElementById('tatamiGrid');
       grid.innerHTML = '';
 
-      // Maçları Tatami bazında grupla
-      for (let t = 1; t <= 9; t++) {
-        const tatamiMatches = data.filter(m => parseInt(m.tatami) === t);
+      for (let i = 1; i <= 9; i++) {
+        const tatamiMatches = allMatches.filter(m => parseInt(m.tatami) === i);
         if (tatamiMatches.length === 0) continue;
 
-        const col = document.createElement('div');
-        col.className = 'tatami-card';
-        
-        let html = `<div class="tatami-header"><span>Tatami ${t}</span></div>`;
+        const activeMatch = tatamiMatches.find(m => m.status === 'active');
+        const waitingMatches = tatamiMatches.filter(m => m.status === 'waiting');
+        const nextMatch = waitingMatches[0];
 
-        tatamiMatches.forEach((match, index) => {
-          const matchCode = `${t}${(index + 1).toString().padStart(2, '0')}`;
-          const isActive = match.status === 'active';
-          
-          html += `
-            <div class="match-box ${match.status}">
-              <div class="badge">${isActive ? '🔴 CANLI' : (match.status === 'completed' ? 'BİTTİ' : 'BEKLİYOR')}</div>
-              <div class="match-no">MAÇ NO: ${matchCode}</div>
-              <div class="category">${match.category}</div>
-              <div class="aka">🔴 ${match.aka} <small>(${match.akaClub || ''})</small></div>
-              <div class="ao">🔵 ${match.ao} <small>(${match.aoClub || ''})</small></div>
+        const card = document.createElement('div');
+        card.className = 'tatami-card';
+
+        let content = `
+          <div class="tatami-header">
+            <span class="tatami-title">Tatami ${i}</span>
+            <span style="font-size:0.85rem; color:#aaa;">Toplam: ${tatamiMatches.length} Maç</span>
+          </div>
+        `;
+
+        if (activeMatch) {
+          content += `
+            <div class="match-box active">
+              <span class="badge badge-active">🔴 CANLI MAÇ</span> <small>(${activeMatch.category})</small>
+              <div class="fighter-row aka-text">🔴 AKA: ${activeMatch.aka}</div>
+              <div style="font-size:0.8rem; color:#aaa;">${activeMatch.akaClub || ''}</div>
+              <div class="fighter-row ao-text">🔵 AO: ${activeMatch.ao}</div>
+              <div style="font-size:0.8rem; color:#aaa;">${activeMatch.aoClub || ''}</div>
             </div>
           `;
-        });
+        } else {
+          content += `<div class="match-box" style="text-align:center; color:#888;">Şu an canlı maç yok</div>`;
+        }
 
-        col.innerHTML = html;
-        grid.appendChild(col);
+        if (nextMatch) {
+          content += `
+            <div class="match-box next">
+              <span class="badge badge-next">⏳ SIRADAKİ MAÇ</span> <small>(${nextMatch.category})</small>
+              <div class="fighter-row aka-text">🔴 AKA: ${nextMatch.aka}</div>
+              <div class="fighter-row ao-text">🔵 AO: ${nextMatch.ao}</div>
+            </div>
+          `;
+        }
+
+        card.innerHTML = content;
+        grid.appendChild(card);
       }
-    });
+
+      if (grid.children.length === 0) {
+        grid.innerHTML = `<p style="text-align:center; width:100%; color:#888;">Henüz kayıtlı maç verisi yüklenmedi.</p>`;
+      }
+    }
+
+    /* MODAL PENCERE FONKSİYONLARI */
+    function openFullListModal() {
+      document.getElementById('fullListModal').style.display = 'flex';
+      renderModalMatchList();
+    }
+
+    function closeFullListModal() {
+      document.getElementById('fullListModal').style.display = 'none';
+    }
+
+    function closeModalOnOutside(e) {
+      if (e.target.id === 'fullListModal') closeFullListModal();
+    }
+
+    function renderModalMatchList() {
+      const filterValue = document.getElementById('modalTatamiFilter').value;
+      const container = document.getElementById('modalTableContainer');
+
+      let list = allMatches;
+      if (filterValue !== 'all') {
+        list = allMatches.filter(m => parseInt(m.tatami) === parseInt(filterValue));
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color:#aaa;">Gösterilecek maç bulunamadı.</p>`;
+        return;
+      }
+
+      let html = `
+        <table class="full-list-table">
+          <thead>
+            <tr>
+              <th>Tatami</th>
+              <th>Maç No</th>
+              <th>Kategori</th>
+              <th>🔴 AKA (Kırmızı)</th>
+              <th>🔵 AO (Mavi)</th>
+              <th>Durum</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      const tatamiCounters = {};
+
+      allMatches.forEach((m) => {
+        const t = m.tatami;
+        tatamiCounters[t] = (tatamiCounters[t] || 0) + 1;
+        const code = `${t}${tatamiCounters[t].toString().padStart(2, '0')}`;
+
+        if (filterValue === 'all' || parseInt(filterValue) === parseInt(t)) {
+          let rowClass = '';
+          let statusBadge = '<span class="badge" style="background:#ffc107; color:#000;">BEKLİYOR</span>';
+          
+          if (m.status === 'active') {
+            rowClass = 'active-row';
+            statusBadge = '<span class="badge" style="background:#28a745; color:#fff;">🔴 CANLI</span>';
+          } else if (m.status === 'completed') {
+            rowClass = 'completed-row';
+            statusBadge = '<span class="badge" style="background:#dc3545; color:#fff;">BİTTİ</span>';
+          }
+
+          html += `
+            <tr class="${rowClass}">
+              <td><strong>Tatami ${m.tatami}</strong></td>
+              <td><span class="badge" style="background:#444; color:#fff;">${code}</span></td>
+              <td>${m.category || '-'}</td>
+              <td><strong class="aka-text">${m.aka}</strong> <br><small style="color:#aaa;">${m.akaClub || ''}</small></td>
+              <td><strong class="ao-text">${m.ao}</strong> <br><small style="color:#aaa;">${m.aoClub || ''}</small></td>
+              <td>${statusBadge}</td>
+            </tr>
+          `;
+        }
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
   </script>
 </body>
 </html>
