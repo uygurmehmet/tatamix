@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TATAMIX - Canlı İzleyici Paneli</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --aka-color: #dc2626;
+      --ao-color: #2563eb;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding: 15px; }
+
+    header { text-align: center; margin-bottom: 20px; }
+    h1 { color: var(--accent); font-size: 1.8rem; margin-bottom: 10px; }
+
+    .controls { display: flex; flex-direction: column; gap: 10px; max-width: 800px; margin: 0 auto 20px auto; }
+    
+    .search-box input {
+      width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155;
+      background: var(--card-bg); color: #fff; font-size: 1rem; outline: none;
+    }
+    .search-box input:focus { border-color: var(--accent); }
+
+    .tatami-filter { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; justify-content: center; }
+    .filter-btn {
+      background: var(--card-bg); border: 1px solid #334155; color: var(--text-main);
+      padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: 600;
+    }
+    .filter-btn.active { background: var(--accent); color: #000; }
+
+    .tatami-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px;
+    }
+
+    .tatami-card {
+      background: var(--card-bg); border-radius: 12px; border: 1px solid #334155;
+      padding: 15px; display: flex; flex-direction: column; gap: 10px; position: relative;
+    }
+
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #334155; padding-bottom: 8px;
+    }
+    .tatami-badge { background: var(--accent); color: #000; padding: 4px 8px; border-radius: 6px; font-weight: bold; }
+    .match-no { font-weight: bold; color: #f59e0b; }
+
+    .category-info { font-size: 0.85rem; color: var(--text-muted); text-align: center; }
+
+    .fighters { display: flex; flex-direction: column; gap: 8px; }
+    .fighter {
+      padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .fighter.aka { background: rgba(220, 38, 38, 0.15); border-left: 4px solid var(--aka-color); }
+    .fighter.ao { background: rgba(37, 99, 235, 0.15); border-left: 4px solid var(--ao-color); }
+    
+    .fighter-name { font-weight: bold; font-size: 1.05rem; }
+    .fighter-club { font-size: 0.8rem; color: var(--text-muted); }
+    .score { font-size: 1.5rem; font-weight: bold; }
+
+    .list-btn {
+      background: #334155; color: #fff; border: none; padding: 10px; border-radius: 6px;
+      cursor: pointer; font-weight: 600; width: 100%; margin-top: 5px;
+    }
+    .list-btn:hover { background: #475569; }
+
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; padding: 15px;
+    }
+    .modal-content {
+      background: var(--card-bg); width: 100%; max-width: 600px; max-height: 80vh;
+      border-radius: 12px; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+    .close-btn { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+
+    .match-list-item {
+      background: var(--bg-color); padding: 10px; border-radius: 6px; font-size: 0.9rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🥋 TATAMIX CANLI SKORBOARD</h1>
+  </header>
+
+  <div class="controls">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Sporcu adı veya kulüp adı ile ara..." oninput="handleSearch()">
+    </div>
+
+    <div class="tatami-filter" id="tatamiFilter">
+      <button class="filter-btn active" onclick="filterTatami('all')">Tüm Tatamiler</button>
+      <button class="filter-btn" onclick="filterTatami(1)">Tatami 1</button>
+      <button class="filter-btn" onclick="filterTatami(2)">Tatami 2</button>
+      <button class="filter-btn" onclick="filterTatami(3)">Tatami 3</button>
+    </div>
+  </div>
+
+  <div class="tatami-grid" id="tatamiContainer"></div>
+
+  <div class="modal" id="listModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Tatami Maç Listesi</h3>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div id="modalListBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const mockMatches = [
+      { id: 101, tatami: 1, category: "10. Sınıf Erkek Kumite", aka: "YAHYA ALTINTAŞ", akaClub: "İzmit SK", akaScore: 2, ao: "DOĞUKAN DEMİREL", aoClub: "Ay Yıldız SK", aoScore: 1, status: "live" },
+      { id: 102, tatami: 1, category: "10. Sınıf Erkek Kumite", aka: "USAME ZALAT", akaClub: "İstanbul SK", akaScore: 0, ao: "RAMAZAN KARATÖZ", aoClub: "Antakya SK", aoScore: 0, status: "waiting" },
+      { id: 201, tatami: 2, category: "KATA GENÇ ERKEK", aka: "BARIŞ YILMAZ", akaClub: "Bursa SK", akaScore: 24.5, ao: "MEHMET KAYA", aoClub: "Ankara SK", aoScore: 23.8, status: "live" },
+      { id: 301, tatami: 3, category: "55 KG KADIN KUMİTE", aka: "AYŞE YILDIZ", akaClub: "İzmit SK", akaScore: 3, ao: "ELİF DEMİR", aoClub: "Samsun SK", aoScore: 0, status: "live" }
+    ];
+
+    let currentTatamiFilter = 'all';
+
+    function renderViewer() {
+      const container = document.getElementById('tatamiContainer');
+      container.innerHTML = '';
+
+      const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+      let filtered = mockMatches.filter(m => m.status === 'live');
+
+      if (currentTatamiFilter !== 'all') {
+        filtered = filtered.filter(m => m.tatami === currentTatamiFilter);
+      }
+
+      if (searchVal) {
+        filtered = mockMatches.filter(m => 
+          m.aka.toLowerCase().includes(searchVal) ||
+          m.akaClub.toLowerCase().includes(searchVal) ||
+          m.ao.toLowerCase().includes(searchVal) ||
+          m.aoClub.toLowerCase().includes(searchVal)
+        );
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color: var(--text-muted);">Aranan kriterlere uygun canlı maç bulunamadı.</div>`;
+        return;
+      }
+
+      filtered.forEach(m => {
+        container.innerHTML += `
+          <div class="tatami-card">
+            <div class="card-header">
+              <span class="tatami-badge">TATAMİ ${m.tatami}</span>
+              <span class="match-no">MAÇ #${m.id}</span>
+            </div>
+            <div class="category-info">${m.category}</div>
+            <div class="fighters">
+              <div class="fighter aka">
+                <div>
+                  <div class="fighter-name">${m.aka}</div>
+                  <div class="fighter-club">${m.akaClub}</div>
+                </div>
+                <div class="score">${m.akaScore}</div>
+              </div>
+              <div class="fighter ao">
+                <div>
+                  <div class="fighter-name">${m.ao}</div>
+                  <div class="fighter-club">${m.aoClub}</div>
+                </div>
+                <div class="score">${m.aoScore}</div>
+              </div>
+            </div>
+            <button class="list-btn" onclick="openTatamiList(${m.tatami})">📋 Tatami ${m.tatami} Maç Listesi</button>
+          </div>
+        `;
+      });
+    }
+
+    function filterTatami(tatami) {
+      currentTatamiFilter = tatami;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      renderViewer();
+    }
+
+    function handleSearch() {
+      renderViewer();
+    }
+
+    function openTatamiList(tatamiNum) {
+      const modal = document.getElementById('listModal');
+      const title = document.getElementById('modalTitle');
+      const listBody = document.getElementById('modalListBody');
+
+      title.innerText = `Tatami ${tatamiNum} - Tüm Maç Programı`;
+      listBody.innerHTML = '';
+
+      const tatamiMatches = mockMatches.filter(m => m.tatami === tatamiNum);
+
+      tatamiMatches.forEach(m => {
+        const statusBadge = m.status === 'live' ? '🔴 CANLI' : '⏳ BEKLEMEDE';
+        listBody.innerHTML += `
+          <div class="match-list-item">
+            <div>
+              <strong>#${m.id}</strong> - ${m.aka} (${m.akaClub}) vs ${m.ao} (${m.aoClub})
+            </div>
+            <span style="font-size:0.8rem; font-weight:bold; color: ${m.status === 'live' ? '#ef4444' : '#94a3b8'}">${statusBadge}</span>
+          </div>
+        `;
+      });
+
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('listModal').style.display = 'none';
+    }
+
+    renderViewer();
+  </script>
+</body>
+</html>

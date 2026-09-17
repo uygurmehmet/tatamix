@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TATAMIX - Tatami Şefi Kontrol Paneli</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --border: #334155;
+      --aka: #ef4444;
+      --ao: #3b82f6;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background: var(--bg-dark); color: var(--text); padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+    /* Login Kutusu */
+    .login-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 30px; width: 100%; max-width: 400px; }
+    .login-card h2 { color: var(--accent); margin-bottom: 20px; text-align: center; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 5px; }
+    .form-group input { width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); color: #fff; border-radius: 6px; outline: none; }
+    .btn-login { width: 100%; padding: 12px; background: var(--accent); color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+    /* Şef Paneli */
+    .chef-container { display: none; width: 100%; max-width: 900px; flex-direction: column; gap: 20px; }
+
+    .header { background: var(--card-bg); border: 1px solid var(--border); padding: 15px 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .tatami-title { font-size: 1.4rem; color: var(--accent); font-weight: bold; }
+
+    .current-match-card { background: var(--card-bg); border: 2px solid var(--accent); border-radius: 12px; padding: 20px; }
+    .badge-live { background: var(--aka); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+    .match-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; }
+
+    .fighters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    .fighter-box { padding: 15px; border-radius: 8px; font-weight: bold; }
+    .fighter-box.aka { background: rgba(239, 68, 68, 0.15); border-left: 5px solid var(--aka); }
+    .fighter-box.ao { background: rgba(59, 130, 246, 0.15); border-left: 5px solid var(--ao); }
+    .club-name { font-size: 0.85rem; font-weight: normal; color: #94a3b8; margin-top: 4px; }
+
+    .action-btn { width: 100%; background: #22c55e; color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+    .action-btn:hover { background: #16a34a; }
+
+    .queue-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .queue-title { font-size: 1.1rem; margin-bottom: 15px; color: #94a3b8; }
+    .queue-list { display: flex; flex-direction: column; gap: 10px; }
+    
+    .queue-item { background: var(--bg-dark); border: 1px solid var(--border); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .match-id { font-weight: bold; color: var(--accent); width: 60px; }
+  </style>
+</head>
+<body>
+
+  <!-- 1. OTURUM AÇMA EKRANI -->
+  <div class="login-card" id="loginSection">
+    <h2>🥋 Tatami Şefi Girişi</h2>
+    <div class="form-group">
+      <label>Kullanıcı Adı</label>
+      <input type="text" id="usernameInput" placeholder="Örn: tatami1">
+    </div>
+    <div class="form-group">
+      <label>Giriş Şifresi</label>
+      <input type="password" id="passwordInput" placeholder="••••••••">
+    </div>
+    <button class="btn-login" onclick="attemptLogin()">Oturum Aç</button>
+  </div>
+
+  <!-- 2. PANOLU ŞEF KONTROL ALANI -->
+  <div class="chef-container" id="panelSection">
+    
+    <div class="header">
+      <span class="tatami-title" id="tatamiHeader">📍 TATAMİ KONTROL PANELİ</span>
+      <button onclick="logout()" style="background:#dc2626; color:#fff; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">Oturumu Kapat</button>
+    </div>
+
+    <div class="current-match-card" id="currentMatchContainer"></div>
+
+    <div class="queue-card">
+      <div class="queue-title">📋 Sıradaki Bekleyen Maçlar</div>
+      <div class="queue-list" id="queueListContainer"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const validUsers = {
+      "tatami1": { pass: "t1pass", tatami: 1 },
+      "tatami2": { pass: "t2pass", tatami: 2 },
+      "tatami3": { pass: "12345",  tatami: 3 },
+      "tatami4": { pass: "12345",  tatami: 4 }
+    };
+
+    let CURRENT_TATAMI = 1;
+
+    let tournamentMatches = [
+      { id: 101, tatami: 1, aka: "YAHYA ALTINTAŞ", akaClub: "İzmit SK", ao: "DOĞUKAN DEMİREL", aoClub: "Ay Yıldız SK", status: "completed" },
+      { id: 102, tatami: 1, aka: "USAME ZALAT", akaClub: "İstanbul SK", ao: "RAMAZAN KARATÖZ", aoClub: "Antakya SK", status: "live" },
+      { id: 103, tatami: 1, aka: "BARIŞ YILMAZ", akaClub: "Bursa SK", ao: "MEHMET KAYA", aoClub: "Ankara SK", status: "waiting" },
+      { id: 104, tatami: 1, aka: "CANER ŞAHİN", akaClub: "İzmit SK", ao: "AHMED DEMİR", aoClub: "Samsun SK", status: "waiting" }
+    ];
+
+    window.onload = function() {
+      const activeSession = sessionStorage.getItem('tatami_session');
+      if (activeSession) {
+        const userData = JSON.parse(activeSession);
+        CURRENT_TATAMI = userData.tatami;
+        showPanel();
+      }
+    };
+
+    function attemptLogin() {
+      const uName = document.getElementById('usernameInput').value.trim();
+      const uPass = document.getElementById('passwordInput').value.trim();
+
+      if (validUsers[uName] && validUsers[uName].pass === uPass) {
+        CURRENT_TATAMI = validUsers[uName].tatami;
+        sessionStorage.setItem('tatami_session', JSON.stringify({ user: uName, tatami: CURRENT_TATAMI }));
+        showPanel();
+      } else {
+        alert("Hatalı Kullanıcı Adı veya Şifre!");
+      }
+    }
+
+    function showPanel() {
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('panelSection').style.display = 'flex';
+      document.getElementById('tatamiHeader').innerText = `📍 TATAMİ ${CURRENT_TATAMI} KONTROL PANELİ`;
+      renderChefPanel();
+    }
+
+    function renderChefPanel() {
+      const myMatches = tournamentMatches.filter(m => m.tatami === CURRENT_TATAMI);
+      const liveMatch = myMatches.find(m => m.status === 'live');
+      const currentContainer = document.getElementById('currentMatchContainer');
+
+      if (liveMatch) {
+        currentContainer.innerHTML = `
+          <div class="match-header">
+            <div><span class="badge-live">🔴 CANLI MAÇ</span></div>
+            <div style="font-size:1.2rem; font-weight:bold; color:var(--accent);">MAÇ NO: #${liveMatch.id}</div>
+          </div>
+          <div class="fighters-grid">
+            <div class="fighter-box aka">
+              🔴 AKA: ${liveMatch.aka}
+              <div class="club-name">${liveMatch.akaClub}</div>
+            </div>
+            <div class="fighter-box ao">
+              🔵 AO: ${liveMatch.ao}
+              <div class="club-name">${liveMatch.aoClub}</div>
+            </div>
+          </div>
+          <button class="action-btn" onclick="nextMatch(${liveMatch.id})">✅ Maçı Bitir & Sıradakine Geç</button>
+        `;
+      } else {
+        currentContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8;">Bu tatamide şu anda aktif maç bulunmuyor.</div>`;
+      }
+
+      const waitingMatches = myMatches.filter(m => m.status === 'waiting');
+      const queueContainer = document.getElementById('queueListContainer');
+      queueContainer.innerHTML = '';
+
+      if (waitingMatches.length === 0) {
+        queueContainer.innerHTML = `<div style="color:#64748b; font-size:0.9rem;">Sırada bekleyen maç kalmadı.</div>`;
+        return;
+      }
+
+      waitingMatches.forEach((m, index) => {
+        const isNext = index === 0 ? '<span style="color:#22c55e; font-weight:bold;">(HAZIRLANSIN)</span>' : '';
+        queueContainer.innerHTML += `
+          <div class="queue-item">
+            <div class="match-id">#${m.id}</div>
+            <div style="flex:1;">
+              <strong>${m.aka}</strong> (${m.akaClub}) vs <strong>${m.ao}</strong> (${m.aoClub}) ${isNext}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function nextMatch(currentMatchId) {
+      const current = tournamentMatches.find(m => m.id === currentMatchId);
+      if (current) current.status = 'completed';
+
+      const next = tournamentMatches.find(m => m.tatami === CURRENT_TATAMI && m.status === 'waiting');
+      if (next) next.status = 'live';
+
+      renderChefPanel();
+    }
+
+    function logout() {
+      sessionStorage.removeItem('tatami_session');
+      document.getElementById('loginSection').style.display = 'block';
+      document.getElementById('panelSection').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
