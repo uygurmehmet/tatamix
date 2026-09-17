@@ -17,7 +17,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
     body { background: var(--bg-dark); color: var(--text); padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
-    /* Login Kutusu */
     .login-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 30px; width: 100%; max-width: 400px; }
     .login-card h2 { color: var(--accent); margin-bottom: 20px; text-align: center; }
     .form-group { margin-bottom: 15px; }
@@ -25,7 +24,6 @@
     .form-group input { width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); color: #fff; border-radius: 6px; outline: none; }
     .btn-login { width: 100%; padding: 12px; background: var(--accent); color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
-    /* Şef Paneli */
     .chef-container { display: none; width: 100%; max-width: 900px; flex-direction: column; gap: 20px; }
 
     .header { background: var(--card-bg); border: 1px solid var(--border); padding: 15px 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
@@ -36,7 +34,7 @@
     .match-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; }
 
     .fighters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-    .fighter-box { padding: 15px; border-radius: 8px; font-weight: bold; }
+    .fighter-box { padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1.1rem; }
     .fighter-box.aka { background: rgba(239, 68, 68, 0.15); border-left: 5px solid var(--aka); }
     .fighter-box.ao { background: rgba(59, 130, 246, 0.15); border-left: 5px solid var(--ao); }
     .club-name { font-size: 0.85rem; font-weight: normal; color: #94a3b8; margin-top: 4px; }
@@ -54,7 +52,6 @@
 </head>
 <body>
 
-  <!-- 1. OTURUM AÇMA EKRANI -->
   <div class="login-card" id="loginSection">
     <h2>🥋 Tatami Şefi Girişi</h2>
     <div class="form-group">
@@ -68,9 +65,7 @@
     <button class="btn-login" onclick="attemptLogin()">Oturum Aç</button>
   </div>
 
-  <!-- 2. PANOLU ŞEF KONTROL ALANI -->
   <div class="chef-container" id="panelSection">
-    
     <div class="header">
       <span class="tatami-title" id="tatamiHeader">📍 TATAMİ KONTROL PANELİ</span>
       <button onclick="logout()" style="background:#dc2626; color:#fff; border:none; padding:8px 15px; border-radius:6px; cursor:pointer;">Oturumu Kapat</button>
@@ -82,7 +77,6 @@
       <div class="queue-title">📋 Sıradaki Bekleyen Maçlar</div>
       <div class="queue-list" id="queueListContainer"></div>
     </div>
-
   </div>
 
   <script>
