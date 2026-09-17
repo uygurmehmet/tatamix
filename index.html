@@ -18,6 +18,20 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
     body { background-color: var(--bg-color); color: var(--text-main); padding: 15px; }
 
+    /* ORTAK ÜST MENÜ (NAVBAR) */
+    .navbar {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--card-bg); padding: 12px 20px; border-radius: 10px;
+      margin-bottom: 20px; border: 1px solid #334155;
+    }
+    .nav-logo { font-size: 1.3rem; font-weight: bold; color: var(--accent); }
+    .nav-links { display: flex; gap: 10px; }
+    .nav-btn {
+      background: #334155; color: #fff; border: 1px solid #475569;
+      padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; text-decoration: none;
+    }
+    .nav-btn:hover { background: var(--accent); color: #000; }
+
     header { text-align: center; margin-bottom: 20px; }
     h1 { color: var(--accent); font-size: 1.8rem; margin-bottom: 5px; }
 
@@ -36,58 +50,52 @@
     }
 
     .controls { display: flex; flex-direction: column; gap: 10px; max-width: 800px; margin: 0 auto 20px auto; }
-    
     .search-box input {
       width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155;
       background: var(--card-bg); color: #fff; font-size: 1rem; outline: none;
     }
-    .search-box input:focus { border-color: var(--accent); }
-
-    .tatami-filter { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; justify-content: center; }
-    .filter-btn {
-      background: var(--card-bg); border: 1px solid #334155; color: var(--text-main);
-      padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: 600;
-    }
-    .filter-btn.active { background: var(--accent); color: #000; }
 
     .tatami-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; }
-
     .tatami-card {
       background: var(--card-bg); border-radius: 12px; border: 1px solid #334155;
-      padding: 15px; display: flex; flex-direction: column; gap: 10px; position: relative;
+      padding: 15px; display: flex; flex-direction: column; gap: 10px;
     }
 
     .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 8px; }
     .tatami-badge { background: var(--accent); color: #000; padding: 4px 8px; border-radius: 6px; font-weight: bold; }
     .match-no { font-weight: bold; color: #f59e0b; display: flex; align-items: center; gap: 5px; }
-
     .live-badge { background: #dc2626; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-
-    .category-info { font-size: 0.85rem; color: var(--text-muted); text-align: center; }
 
     .fighters { display: flex; flex-direction: column; gap: 8px; }
     .fighter { padding: 12px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
     .fighter.aka { background: rgba(220, 38, 38, 0.15); border-left: 5px solid var(--aka-color); }
     .fighter.ao { background: rgba(37, 99, 235, 0.15); border-left: 5px solid var(--ao-color); }
-    
     .fighter-name { font-weight: bold; font-size: 1.1rem; }
-    .fighter-club { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
+    .fighter-club { font-size: 0.85rem; color: var(--text-muted); }
 
-    .list-btn { background: #334155; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 5px; }
-    .list-btn:hover { background: #475569; }
-
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
-    .modal-content { background: var(--card-bg); width: 100%; max-width: 600px; max-height: 80vh; border-radius: 12px; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    /* MODAL VE LOGİN POPUP */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 15px; }
+    .modal-content { background: var(--card-bg); width: 100%; max-width: 400px; border-radius: 12px; padding: 25px; display: flex; flex-direction: column; gap: 15px; border: 1px solid #334155; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; }
     .close-btn { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
-
-    .match-list-item { background: var(--bg-color); padding: 10px; border-radius: 6px; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+    .input-field { width: 100%; padding: 10px; background: var(--bg-color); border: 1px solid #334155; color: #fff; border-radius: 6px; outline: none; }
+    .btn-submit { background: var(--accent); color: #000; font-weight: bold; padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; }
   </style>
 </head>
 <body>
 
+  <!-- ORTAK NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-logo">🥋 TATAMIX</div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-btn" style="background:var(--accent); color:#000;">📺 Canlı İzleyici</a>
+      <button class="nav-btn" onclick="openLoginModal('chef')">🥋 Tatami Şefi Girişi</button>
+      <button class="nav-btn" onclick="openLoginModal('admin')">⚙️ Admin Girişi</button>
+    </div>
+  </nav>
+
   <header>
-    <h1>🥋 TATAMIX CANLI MAÇ EKRANI</h1>
+    <h1>CANLI MATCH EKRANI</h1>
     <div class="live-status-bar">
       <div class="pulse-dot"></div>
       <span>Anlık Canlı Yayın Aktif</span>
@@ -96,136 +104,100 @@
 
   <div class="controls">
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="Sporcu adı veya kulüp adı ile ara..." oninput="renderViewer()">
-    </div>
-
-    <div class="tatami-filter" id="tatamiFilter">
-      <button class="filter-btn active" onclick="filterTatami('all', this)">Tüm Tatamiler</button>
-      <button class="filter-btn" onclick="filterTatami(1, this)">Tatami 1</button>
-      <button class="filter-btn" onclick="filterTatami(2, this)">Tatami 2</button>
-      <button class="filter-btn" onclick="filterTatami(3, this)">Tatami 3</button>
+      <input type="text" id="searchInput" placeholder="Sporcu veya Kulüp adı ara..." oninput="renderViewer()">
     </div>
   </div>
 
   <div class="tatami-grid" id="tatamiContainer"></div>
 
-  <!-- MODAL -->
-  <div class="modal" id="listModal">
+  <!-- GİRİŞ POPUP MODAL -->
+  <div class="modal" id="loginModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 id="modalTitle">Tatami Maç Listesi</h3>
+        <h3 id="modalLoginTitle">Giriş Yap</h3>
         <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
-      <div id="modalListBody"></div>
+      <div>
+        <label style="font-size:0.8rem; color:#94a3b8;">Kullanıcı Adı</label>
+        <input type="text" id="loginUser" class="input-field" placeholder="Kullanıcı adı...">
+      </div>
+      <div>
+        <label style="font-size:0.8rem; color:#94a3b8;">Şifre</label>
+        <input type="password" id="loginPass" class="input-field" placeholder="••••••••">
+      </div>
+      <button class="btn-submit" onclick="submitLogin()">Giriş Yap ve Geçiş Yap</button>
     </div>
   </div>
 
   <script>
-    let matchesData = [
-      { id: 101, tatami: 1, category: "10. Sınıf Erkek Kumite", aka: "YAHYA ALTINTAŞ", akaClub: "İzmit SK", ao: "DOĞUKAN DEMİREL", aoClub: "Ay Yıldız SK", status: "live" },
-      { id: 102, tatami: 1, category: "10. Sınıf Erkek Kumite", aka: "USAME ZALAT", akaClub: "İstanbul SK", ao: "RAMAZAN KARATÖZ", aoClub: "Antakya SK", status: "waiting" },
-      { id: 201, tatami: 2, category: "KATA GENÇ ERKEK", aka: "BARIŞ YILMAZ", akaClub: "Bursa SK", ao: "MEHMET KAYA", aoClub: "Ankara SK", status: "live" },
-      { id: 301, tatami: 3, category: "55 KG KADIN KUMİTE", aka: "AYŞE YILDIZ", akaClub: "İzmit SK", ao: "ELİF DEMİR", aoClub: "Samsun SK", status: "live" }
-    ];
+    let targetRole = ''; // 'admin' veya 'chef'
 
-    let currentTatamiFilter = 'all';
+    const usersDatabase = {
+      admin: { user: "admin", pass: "admin123", redirect: "admin.html" },
+      chef1: { user: "tatami1", pass: "t1pass", redirect: "chef.html", tatami: 1 },
+      chef2: { user: "tatami2", pass: "t2pass", redirect: "chef.html", tatami: 2 },
+      chef3: { user: "tatami3", pass: "12345",  redirect: "chef.html", tatami: 3 }
+    };
+
+    function openLoginModal(role) {
+      targetRole = role;
+      document.getElementById('modalLoginTitle').innerText = role === 'admin' ? '⚙️ Admin Paneli Girişi' : '🥋 Tatami Şefi Girişi';
+      document.getElementById('loginUser').value = '';
+      document.getElementById('loginPass').value = '';
+      document.getElementById('loginModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('loginModal').style.display = 'none';
+    }
+
+    function submitLogin() {
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value.trim();
+
+      if (targetRole === 'admin') {
+        if (u === usersDatabase.admin.user && p === usersDatabase.admin.pass) {
+          sessionStorage.setItem('admin_logged', 'true');
+          window.location.href = 'admin.html';
+        } else {
+          alert('Hatalı Admin Kullanıcı Adı veya Şifre!');
+        }
+      } else if (targetRole === 'chef') {
+        let foundChef = Object.values(usersDatabase).find(item => item.user === u && item.pass === p);
+        if (foundChef) {
+          sessionStorage.setItem('chef_session', JSON.stringify({ user: foundChef.user, tatami: foundChef.tatami }));
+          window.location.href = 'chef.html';
+        } else {
+          alert('Hatalı Tatami Şefi Kullanıcı Adı veya Şifre!');
+        }
+      }
+    }
+
+    // DUMMY DATA DISPLAY
+    let matchesData = [
+      { id: 101, tatami: 1, category: "10. Sınıf Erkek Kumite", aka: "YAHYA ALTINTAŞ", akaClub: "İzmit SK", ao: "DOĞUKAN DEMİREL", aoClub: "Ay Yıldız SK" },
+      { id: 201, tatami: 2, category: "Genç Erkek Kata", aka: "BARIŞ YILMAZ", akaClub: "Bursa SK", ao: "MEHMET KAYA", aoClub: "Ankara SK" }
+    ];
 
     function renderViewer() {
       const container = document.getElementById('tatamiContainer');
-      const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
-      
-      let filtered = matchesData.filter(m => m.status === 'live');
-
-      if (currentTatamiFilter !== 'all') {
-        filtered = filtered.filter(m => m.tatami === currentTatamiFilter);
-      }
-
-      if (searchVal) {
-        filtered = matchesData.filter(m => 
-          m.aka.toLowerCase().includes(searchVal) ||
-          m.akaClub.toLowerCase().includes(searchVal) ||
-          m.ao.toLowerCase().includes(searchVal) ||
-          m.aoClub.toLowerCase().includes(searchVal)
-        );
-      }
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color: var(--text-muted); padding: 40px;">Şu anda canlı devam eden maç bulunmuyor.</div>`;
-        return;
-      }
-
-      let htmlContent = '';
-      filtered.forEach(m => {
-        htmlContent += `
+      container.innerHTML = '';
+      matchesData.forEach(m => {
+        container.innerHTML += `
           <div class="tatami-card">
             <div class="card-header">
               <span class="tatami-badge">TATAMİ ${m.tatami}</span>
               <span class="match-no"><span class="live-badge">🔴 CANLI</span> MAÇ #${m.id}</span>
             </div>
-            <div class="category-info">${m.category}</div>
+            <div style="font-size:0.85rem; color:#94a3b8; text-align:center;">${m.category}</div>
             <div class="fighters">
-              <div class="fighter aka">
-                <div>
-                  <div class="fighter-name">🔴 AKA: ${m.aka}</div>
-                  <div class="fighter-club">${m.akaClub}</div>
-                </div>
-              </div>
-              <div class="fighter ao">
-                <div>
-                  <div class="fighter-name">🔵 AO: ${m.ao}</div>
-                  <div class="fighter-club">${m.aoClub}</div>
-                </div>
-              </div>
+              <div class="fighter aka"><div>🔴 AKA: ${m.aka}</div><div class="fighter-club">${m.akaClub}</div></div>
+              <div class="fighter ao"><div>🔵 AO: ${m.ao}</div><div class="fighter-club">${m.aoClub}</div></div>
             </div>
-            <button class="list-btn" onclick="openTatamiList(${m.tatami})">📋 Tatami ${m.tatami} Tüm Programı</button>
           </div>
         `;
       });
-
-      container.innerHTML = htmlContent;
     }
-
-    function filterTatami(tatami, btnElement) {
-      currentTatamiFilter = tatami;
-      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-      btnElement.classList.add('active');
-      renderViewer();
-    }
-
-    function openTatamiList(tatamiNum) {
-      const modal = document.getElementById('listModal');
-      const title = document.getElementById('modalTitle');
-      const listBody = document.getElementById('modalListBody');
-
-      title.innerText = `Tatami ${tatamiNum} - Tüm Maç Programı`;
-      listBody.innerHTML = '';
-
-      const tatamiMatches = matchesData.filter(m => m.tatami === tatamiNum);
-
-      tatamiMatches.forEach(m => {
-        const statusBadge = m.status === 'live' ? '🔴 CANLI' : (m.status === 'completed' ? '✅ BİTTİ' : '⏳ BEKLEMEDE');
-        const badgeColor = m.status === 'live' ? '#ef4444' : (m.status === 'completed' ? '#22c55e' : '#94a3b8');
-        
-        listBody.innerHTML += `
-          <div class="match-list-item">
-            <div>
-              <strong>#${m.id}</strong> - ${m.aka} (${m.akaClub}) vs ${m.ao} (${m.aoClub})
-            </div>
-            <span style="font-size:0.8rem; font-weight:bold; color: ${badgeColor}">${statusBadge}</span>
-          </div>
-        `;
-      });
-
-      modal.style.display = 'flex';
-    }
-
-    function closeModal() {
-      document.getElementById('listModal').style.display = 'none';
-    }
-
-    setInterval(() => {
-      renderViewer();
-    }, 3000);
 
     renderViewer();
   </script>

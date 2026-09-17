@@ -3,318 +3,131 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TATAMIX - Turnuva Yönetim Paneli</title>
-  <!-- PDF Parse Etmek İçin PDF.js Kütüphanesi -->
+  <title>TATAMIX - Admin Paneli</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
   <style>
     :root {
-      --bg-dark: #0f172a;
-      --card-bg: #1e293b;
-      --accent: #38bdf8;
-      --text-main: #f8fafc;
-      --border-color: #334155;
-      --danger: #dc2626;
-      --success: #22c55e;
-      --warning: #f59e0b;
+      --bg-dark: #0f172a; --card-bg: #1e293b; --accent: #38bdf8;
+      --text-main: #f8fafc; --border-color: #334155; --danger: #dc2626; --success: #22c55e;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-    body { background: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+    body { background: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-    .sidebar { width: 260px; background: var(--card-bg); border-right: 1px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-    .sidebar h2 { color: var(--accent); margin-bottom: 20px; font-size: 1.5rem; text-align: center; }
-    .menu-btn { background: transparent; color: var(--text-main); border: 1px solid transparent; padding: 12px; text-align: left; border-radius: 8px; cursor: pointer; font-size: 0.95rem; transition: 0.2s; }
-    .menu-btn:hover { background: #334155; }
+    /* ORTAK NAVBAR */
+    .navbar {
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--card-bg); padding: 12px 20px; border-bottom: 1px solid var(--border-color);
+    }
+    .nav-logo { font-size: 1.3rem; font-weight: bold; color: var(--accent); }
+    .nav-links { display: flex; gap: 10px; }
+    .nav-btn {
+      background: #334155; color: #fff; border: 1px solid #475569;
+      padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; text-decoration: none;
+    }
+
+    .admin-layout { display: flex; flex: 1; overflow: hidden; }
+    .sidebar { width: 240px; background: var(--card-bg); border-right: 1px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .menu-btn { background: transparent; color: var(--text-main); border: 1px solid transparent; padding: 12px; text-align: left; border-radius: 8px; cursor: pointer; font-size: 0.95rem; }
     .menu-btn.active { background: var(--accent); color: #000; font-weight: bold; }
 
     .main-content { flex: 1; padding: 25px; overflow-y: auto; }
-    .header-area { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
-    
-    .tab-section { display: none; }
-    .tab-section.active { display: block; }
-
-    /* YÜKLEME ALANI */
-    .upload-box { background: var(--card-bg); border: 2px dashed var(--accent); padding: 30px; border-radius: 12px; text-align: center; max-width: 650px; margin-bottom: 20px; }
-
-    /* TATAMİ & KATEGORİ SÜRÜKLE BIRAK ALANI */
-    .tatami-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
-    .tatami-column { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; display: flex; flex-direction: column; gap: 10px; min-height: 400px; }
-    .tatami-column h3 { color: var(--accent); border-bottom: 1px solid var(--border-color); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .tatami-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 15px; }
+    .tatami-column { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; min-height: 400px; }
 
     .category-list { display: flex; flex-direction: column; gap: 10px; min-height: 300px; padding: 5px; background: rgba(0,0,0,0.15); border-radius: 8px; }
+    .category-card { background: #334155; border: 1px solid #475569; border-radius: 8px; padding: 12px; cursor: grab; }
+    .cat-title { font-weight: bold; display: flex; justify-content: space-between; }
 
-    .category-card {
-      background: #334155; border: 1px solid #475569; border-radius: 8px; padding: 12px; cursor: grab;
-      transition: transform 0.2s, background-color 0.2s; position: relative;
-    }
-    .category-card:active { cursor: grabbing; transform: scale(0.98); }
-    .category-card.dragging { opacity: 0.5; border: 2px dashed var(--accent); }
-
-    .cat-title { font-weight: bold; font-size: 0.95rem; color: #fff; margin-bottom: 4px; display: flex; justify-content: space-between; }
-    .cat-info { font-size: 0.8rem; color: #94a3b8; }
-    .cat-matches-badge { background: var(--warning); color: #000; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; }
-
-    .btn-action { background: var(--success); color: #fff; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
-    .btn-action:hover { opacity: 0.9; }
-
-    /* MAÇ SIRA POPUP / MODAL */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
-    .modal-content { background: var(--card-bg); width: 90%; max-width: 700px; max-height: 85vh; border-radius: 12px; padding: 20px; overflow-y: auto; }
-    .match-row { background: var(--bg-dark); padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent); }
+    .btn-action { background: var(--success); color: #fff; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <aside class="sidebar">
-    <h2>🥋 TATAMIX ADMIN</h2>
-    <button class="menu-btn active" onclick="switchTab('drawTab', this)">📥 PDF Kura & Sıralama</button>
-    <button class="menu-btn" onclick="switchTab('tatamiTab', this)">🥋 Tatami Yayın Yönetimi</button>
-  </aside>
+  <!-- OTURUM KONTROLÜ -->
+  <script>
+    if (sessionStorage.getItem('admin_logged') !== 'true') {
+      alert('Bu sayfaya erişim yetkiniz yok! Lütfen Giriş Yapın.');
+      window.location.href = 'index.html';
+    }
+  </script>
 
-  <main class="main-content">
-    
-    <!-- KURA VE SÜRÜKLE BIRAK YÖNETİMİ -->
-    <div id="drawTab" class="tab-section active">
-      <div class="header-area">
-        <h1>2. Gün PDF Kura Yükleme ve Maç Numaralandırma</h1>
+  <nav class="navbar">
+    <div class="nav-logo">⚙️ ADMIN PANELI</div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-btn">📺 Canlı İzleyici Ekranı</a>
+      <a href="chef.html" class="nav-btn">🥋 Şef Paneli</a>
+      <button class="nav-btn" style="background:var(--danger);" onclick="logoutAdmin()">🚪 Çıkış Yap</button>
+    </div>
+  </nav>
+
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <button class="menu-btn active">📥 PDF Kura & Sıralama</button>
+    </aside>
+
+    <main class="main-content">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>2. Gün PDF Kuraları ve Maç Sıralama Tahtası</h2>
         <button class="btn-action" onclick="recalculateMatchNumbers()">🔢 Maç Numaralarını Yeniden Hesapla</button>
       </div>
 
-      <div class="upload-box">
-        <p style="font-size:1.1rem; margin-bottom:10px;">📄 2. Gün Kura Liste PDF Dosyasını Yükleyin</p>
-        <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:15px;">Sistem kategorileri ve eşleşmeleri otomatik ayıklayarak sıralama tahtasına ekleyecektir.</p>
-        <input type="file" id="pdfInput" accept="application/pdf" style="display:none;" onchange="processPDF(event)">
-        <button class="btn-action" style="background:var(--accent); color:#000;" onclick="document.getElementById('pdfInput').click()">PDF Dosyası Seç</button>
-      </div>
-
-      <h2 style="margin-top:20px; font-size:1.2rem; color:var(--accent);">📌 Tatami ve Kategori Sıralaması (Sürükle & Bırak)</h2>
-      <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:15px;">Kategorilerin yerini sürükleyerek tatamiler arasında taşıyabilir veya öncelik sırasını değiştirebilirsiniz. Değişiklik yaptığınızda maç numaraları anında otomatik güncellenir.</p>
-
-      <div class="tatami-columns" id="tatamiColumnsContainer">
-        <!-- Tatami 1 Col -->
-        <div class="tatami-column" data-tatami="1">
-          <h3>
-            <span>TATAMİ 1</span>
-            <span style="font-size:0.8rem; color:var(--text-main);" id="t1-match-count">0 Maç</span>
-          </h3>
-          <div class="category-list" id="tatami-1-list" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+      <div class="tatami-columns">
+        <div class="tatami-column">
+          <h3>TATAMİ 1</h3>
+          <div class="category-list" id="tatami-1-list" ondragover="allowDrop(event)" ondrop="drop(event)">
+            <div class="category-card" draggable="true" id="cat_101" ondragstart="drag(event)">
+              <div class="cat-title"><span>10. Sınıf Erkek Kumite</span></div>
+              <div style="font-size:0.8rem; color:#94a3b8;">Başlangıç No: <strong class="start-match-no">#101</strong></div>
+            </div>
+          </div>
         </div>
 
-        <!-- Tatami 2 Col -->
-        <div class="tatami-column" data-tatami="2">
-          <h3>
-            <span>TATAMİ 2</span>
-            <span style="font-size:0.8rem; color:var(--text-main);" id="t2-match-count">0 Maç</span>
-          </h3>
-          <div class="category-list" id="tatami-2-list" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
-        </div>
-
-        <!-- Tatami 3 Col -->
-        <div class="tatami-column" data-tatami="3">
-          <h3>
-            <span>TATAMİ 3</span>
-            <span style="font-size:0.8rem; color:var(--text-main);" id="t3-match-count">0 Maç</span>
-          </h3>
-          <div class="category-list" id="tatami-3-list" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
+        <div class="tatami-column">
+          <h3>TATAMİ 2</h3>
+          <div class="category-list" id="tatami-2-list" ondragover="allowDrop(event)" ondrop="drop(event)">
+            <div class="category-card" draggable="true" id="cat_201" ondragstart="drag(event)">
+              <div class="cat-title"><span>Genç Erkek Kata</span></div>
+              <div style="font-size:0.8rem; color:#94a3b8;">Başlangıç No: <strong class="start-match-no">#201</strong></div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-
-    <!-- TATAMİ MANUEL YÖNETİM -->
-    <div id="tatamiTab" class="tab-section">
-      <div class="header-area">
-        <h1>Tatami Canlı Durum Paneli</h1>
-      </div>
-      <p style="color:#94a3b8;">Canlı yayındaki maç sıralaması Sürükle-Bırak düzeninize göre anlık senkronize olur.</p>
-    </div>
-
-  </main>
-
-  <!-- KATEGORİ DETAY MODAL -->
-  <div class="modal" id="catDetailModal">
-    <div class="modal-content">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h3 id="modalCatTitle">Kategori Maç Detayları</h3>
-        <button onclick="closeModal()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
-      </div>
-      <div id="modalMatchList"></div>
-    </div>
+    </main>
   </div>
 
   <script>
-    // Örnek Veri Yapısı (PDF Parse Edildiğinde Oluşacak Yapı)
-    let categoriesData = [
-      {
-        id: "cat_101",
-        title: "10. Sınıf Erkek Kumite",
-        tatami: 1,
-        matches: [
-          { aka: "YAHYA ALTINTAŞ", akaClub: "İzmit SK", ao: "DOĞUKAN DEMİREL", aoClub: "Ay Yıldız SK" },
-          { aka: "USAME ZALAT", akaClub: "İstanbul SK", ao: "RAMAZAN KARATÖZ", aoClub: "Antakya SK" }
-        ]
-      },
-      {
-        id: "cat_102",
-        title: "Ümit Erkek Kumite -55 KG",
-        tatami: 1,
-        matches: [
-          { aka: "AHMET YILMAZ", akaClub: "Bursa SK", ao: "MEHMET KAYA", aoClub: "Ankara SK" }
-        ]
-      },
-      {
-        id: "cat_201",
-        title: "Genç Erkek Kata",
-        tatami: 2,
-        matches: [
-          { aka: "CANER ŞAHİN", akaClub: "İzmit SK", ao: "BURAK CAN", aoClub: "Kocaeli SK" },
-          { aka: "ALİ ÖZTÜRK", akaClub: "Sakarya SK", ao: "MUSTAFA DEMİR", aoClub: "Düzce SK" }
-        ]
-      }
-    ];
-
-    function switchTab(tabId, btnElement) {
-      document.querySelectorAll('.tab-section').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      btnElement.classList.add('active');
-    }
-
-    // PDF OKUMA SİMÜLASYONU VE İŞLEME
-    function processPDF(event) {
-      const file = event.target.files[0];
-      if (file) {
-        alert(`📄 "${file.name}" yüklendi. PDF sayfaları taranıyor ve kategoriler otomatik oluşturuluyor...`);
-        // PDF.js ile metinler okunup match kalıpları eşleştirilebilir
-        renderCategories();
-        recalculateMatchNumbers();
-      }
-    }
-
-    // KATEGORİLERİ TATAMİ EKRANLARINA BASTIRMA
-    function renderCategories() {
-      document.getElementById('tatami-1-list').innerHTML = '';
-      document.getElementById('tatami-2-list').innerHTML = '';
-      document.getElementById('tatami-3-list').innerHTML = '';
-
-      categoriesData.forEach(cat => {
-        const catCard = document.createElement('div');
-        catCard.className = 'category-card';
-        catCard.draggable = true;
-        catCard.id = cat.id;
-        catCard.setAttribute('ondragstart', 'drag(event)');
-
-        catCard.innerHTML = `
-          <div class="cat-title">
-            <span>${cat.title}</span>
-            <span class="cat-matches-badge">${cat.matches.length} Maç</span>
-          </div>
-          <div class="cat-info">
-            <span>Başlangıç Maç No: <strong class="start-match-no">-</strong></span>
-            <button onclick="openCategoryDetail('${cat.id}')" style="float:right; background:#475569; color:#fff; border:none; padding:2px 6px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Gözat</button>
-          </div>
-        `;
-
-        const targetList = document.getElementById(`tatami-${cat.tatami}-list`);
-        if (targetList) targetList.appendChild(catCard);
-      });
-    }
-
-    // SÜRÜKLE - BIRAK (DRAG & DROP) LOGİC
-    function allowDrop(ev) {
-      ev.preventDefault();
-    }
-
-    function drag(ev) {
-      ev.dataTransfer.setData("text", ev.target.id);
-      ev.target.classList.add('dragging');
-    }
-
+    function allowDrop(ev) { ev.preventDefault(); }
+    function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
     function drop(ev) {
       ev.preventDefault();
-      const catId = ev.dataTransfer.getData("text");
-      const draggedEl = document.getElementById(catId);
-      draggedEl.classList.remove('dragging');
-
+      const data = ev.dataTransfer.getData("text");
       let dropTarget = ev.target;
-      
-      // Hedef 'category-list' konteynırı değilse üst ebeveynine ulaş
       while (dropTarget && !dropTarget.classList.contains('category-list')) {
         dropTarget = dropTarget.parentElement;
       }
-
       if (dropTarget) {
-        dropTarget.appendChild(draggedEl);
-
-        // Tatami ID güncelle
-        const newTatamiNum = parseInt(dropTarget.id.replace('tatami-', '').replace('-list', ''));
-        const catObj = categoriesData.find(c => c.id === catId);
-        if (catObj) catObj.tatami = newTatamiNum;
-
-        // Maç Numaralarını Anında Yeniden Hesapla
+        dropTarget.appendChild(document.getElementById(data));
         recalculateMatchNumbers();
       }
     }
 
-    // MAÇ NUMARALARINI DİNAMİK YENİDEN HESAPLAMA LOGİC
     function recalculateMatchNumbers() {
-      [1, 2, 3].forEach(tatamiNum => {
+      [1, 2].forEach(tatamiNum => {
         const listEl = document.getElementById(`tatami-${tatamiNum}-list`);
-        const catCards = listEl.querySelectorAll('.category-card');
-        
-        let matchCounter = 101 + ((tatamiNum - 1) * 100); // Tatami 1 -> 101, Tatami 2 -> 201, Tatami 3 -> 301
-        let totalTatamiMatches = 0;
-
-        catCards.forEach(card => {
-          const catId = card.id;
-          const catObj = categoriesData.find(c => c.id === catId);
-
-          if (catObj) {
-            // Başlangıç maç nosunu güncelle
-            card.querySelector('.start-match-no').innerText = `#${matchCounter}`;
-
-            // Kategori içindeki maçlara dinamik id atama
-            catObj.matches.forEach(m => {
-              m.matchNo = matchCounter;
-              matchCounter++;
-              totalTatamiMatches++;
-            });
-          }
+        if(!listEl) return;
+        const cards = listEl.querySelectorAll('.category-card');
+        let counter = 101 + ((tatamiNum - 1) * 100);
+        cards.forEach(card => {
+          card.querySelector('.start-match-no').innerText = `#${counter}`;
+          counter += 2; // Örnek artış
         });
-
-        // Tatami toplam maç badge güncelleme
-        const countBadge = document.getElementById(`t${tatamiNum}-match-count`);
-        if (countBadge) countBadge.innerText = `${totalTatamiMatches} Maç`;
       });
     }
 
-    // KATEGORİ İÇİ MAÇLARI GÖRÜNTÜLEME
-    function openCategoryDetail(catId) {
-      const catObj = categoriesData.find(c => c.id === catId);
-      if (!catObj) return;
-
-      document.getElementById('modalCatTitle').innerText = `${catObj.title} (Tatami ${catObj.tatami})`;
-      const listContainer = document.getElementById('modalMatchList');
-      listContainer.innerHTML = '';
-
-      catObj.matches.forEach(m => {
-        listContainer.innerHTML += `
-          <div class="match-row">
-            <div><strong>MAÇ #${m.matchNo || '-'}</strong></div>
-            <div>🔴 ${m.aka} (${m.akaClub}) vs 🔵 ${m.ao} (${m.aoClub})</div>
-          </div>
-        `;
-      });
-
-      document.getElementById('catDetailModal').style.display = 'flex';
+    function logoutAdmin() {
+      sessionStorage.removeItem('admin_logged');
+      window.location.href = 'index.html';
     }
-
-    function closeModal() {
-      document.getElementById('catDetailModal').style.display = 'none';
-    }
-
-    window.onload = function() {
-      renderCategories();
-      recalculateMatchNumbers();
-    };
   </script>
 </body>
 </html>
